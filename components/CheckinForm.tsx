@@ -28,21 +28,22 @@ const LAO_TRANSLATIONS = {
   // Form Titles
   checkinForm: "ແບບຟອມການກົດເຂົ້າງານ",
   submitCheckin: "✅ ສົ່ງຂໍ້ມູນການກົດເຂົ້າງານ",
-  
+
   // Employee Section
   employeeCode: "ລະຫັດພະນັກງານ *",
   employeePlaceholder: "ຕົວຢ່າງ: EMP123",
-  
+
   // Device Section
   deviceId: "ລະຫັດອຸປະກອນ",
   selectDevice: "ເລືອກອຸປະກອນ",
-  
+
   // Location Section
   location: "ສະຖານທີ່ (ຕັ້ງຄ່າອັດຕະໂນມັດຈາກອຸປະກອນ)",
   latitude: "ເສັ້ນຂະໜານ",
   longitude: "ເສັ້ນແວງ",
-  locationHint: "ພິກັດຈະຖືກຕັ້ງຄ່າອັດຕະໂນມັດຕາມອຸປະກອນທີ່ເລືອກ. ທ່ານສາມາດແກ້ໄຂໄດ້ດ້ວຍຕົນເອງ.",
-  
+  locationHint:
+    "ພິກັດຈະຖືກຕັ້ງຄ່າອັດຕະໂນມັດຕາມອຸປະກອນທີ່ເລືອກ. ທ່ານສາມາດແກ້ໄຂໄດ້ດ້ວຍຕົນເອງ.",
+
   // Status & Comments
   status: "ສະຖານະ",
   comments: "ຄຳເຫັນ",
@@ -50,25 +51,26 @@ const LAO_TRANSLATIONS = {
   statusOptions: {
     normal: "ປົກກະຕິ",
     late: "ມາຊ້າ",
-    early: "ອອກເຊົ້າ"
+    early: "ອອກເຊົ້າ",
   },
-  
+
   // Punch Time Section
   punchTime: "ເວລາກົດເຂົ້າງານ",
   punchTimeTitle: "ເວລາກົດເຂົ້າງານ",
   setToNow: "ຕັ້ງເປັນປັດຈຸບັນ",
   useDateTimePicker: "📅 ໃຊ້ຕົວເລືອກວັນທີ/ເວລາ",
   postgresFormat: "ຮູບແບບ PostgreSQL",
-  formatHint: "ຮູບແບບ: YYYY-MM-DD HH:MM:SS.SSS (ຕົວຢ່າງ: 2025-10-22 17:35:30.694)",
+  formatHint:
+    "ຮູບແບບ: YYYY-MM-DD HH:MM:SS.SSSSSS (ຕົວຢ່າງ: 2025-10-22 17:35:30.694356)",
   date: "ວັນທີ",
   time: "ເວລາ (24 ຊົ່ວໂມງ)",
   setToNowBtn: "ຕັ້ງເປັນປັດຈຸບັນ",
   done: "ສຳເລັດ",
-  
+
   // Current Selection
   currentSelection: "ການເລືອກປັດຈຸບັນ",
   willBeSubmitted: "ຈະຖືກສົ່ງເປັນ:",
-  
+
   // Loading States
   submitting: "ກຳລັງສົ່ງຂໍ້ມູນ...",
 };
@@ -80,7 +82,8 @@ interface Props {
   loading: boolean;
 }
 
-// Convert Date to PostgreSQL timestamp format in LOCAL time
+// Convert Date to PostgreSQL timestamp format with 6-digit MICROSECONDS (LOCAL time)
+// Convert Date to PostgreSQL timestamp with FAKE but realistic 6-digit microseconds
 const toPostgresTimestamp = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -88,12 +91,22 @@ const toPostgresTimestamp = (date: Date): string => {
   const hours = String(date.getHours()).padStart(2, "0");
   const minutes = String(date.getMinutes()).padStart(2, "0");
   const seconds = String(date.getSeconds()).padStart(2, "0");
-  const milliseconds = String(date.getMilliseconds()).padStart(3, "0");
 
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+  // Get real milliseconds (0–999)
+  const ms = date.getMilliseconds();
+
+  // Generate 3 random digits (000–999) for fractional milliseconds (to simulate µs)
+  const randomFraction = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, "0");
+
+  // Combine: ms (3 digits) + randomFraction (3 digits) = 6-digit "microseconds"
+  const fakeMicroseconds = `${String(ms).padStart(3, "0")}${randomFraction}`;
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${fakeMicroseconds}`;
 };
 
-// Parse PostgreSQL timestamp - treat as LOCAL time
+// Parse PostgreSQL timestamp (with 6-digit microseconds) → treat as LOCAL time
 const fromPostgresTimestamp = (timestamp: string): Date => {
   if (!timestamp) return new Date();
 
@@ -102,15 +115,23 @@ const fromPostgresTimestamp = (timestamp: string): Date => {
     if (!datePart || !timePart) return new Date();
 
     const [year, month, day] = datePart.split("-").map(Number);
-    const [time, milliseconds] = timePart.split(".");
+    const [time, microsecondsStr = "0"] = timePart.split(".");
     const [hours, minutes, seconds] = time.split(":").map(Number);
 
-    const date = new Date(year, month - 1, day, hours, minutes, seconds);
+    // Ensure microsecondsStr is at least 6 digits (pad right if needed), then take first 6
+    const fullMicroseconds = microsecondsStr.padEnd(6).substring(0, 6);
+    const microseconds = parseInt(fullMicroseconds, 10);
+    const milliseconds = Math.floor(microseconds / 1000);
 
-    if (milliseconds) {
-      date.setMilliseconds(parseInt(milliseconds.substring(0, 3)));
-    }
-
+    const date = new Date(
+      year,
+      month - 1,
+      day,
+      hours,
+      minutes,
+      seconds,
+      milliseconds
+    );
     return date;
   } catch (error) {
     console.error("Error parsing PostgreSQL timestamp:", error);
@@ -215,8 +236,18 @@ const DateTimePicker: React.FC<{
             disabled
           >
             <div className="h-4 bg-zinc-300 dark:bg-zinc-600 rounded-lg w-3/4"></div>
-            <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg
+              className="w-4 h-4 text-zinc-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
           </button>
         </div>
@@ -235,7 +266,7 @@ const DateTimePicker: React.FC<{
           type="text"
           value={textInput}
           onChange={handleTextInputChange}
-          placeholder="YYYY-MM-DD HH:MM:SS.SSS"
+          placeholder="YYYY-MM-DD HH:MM:SS.SSSSSS"
           className="w-full px-4 py-3 rounded-xl border-2 border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono text-sm shadow-sm"
         />
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
@@ -250,9 +281,21 @@ const DateTimePicker: React.FC<{
           onClick={() => setIsOpen(!isOpen)}
           className="w-full px-4 py-3 rounded-xl border-2 border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-left flex justify-between items-center shadow-sm hover:shadow-md"
         >
-          <span className="font-medium">{LAO_TRANSLATIONS.useDateTimePicker}: {formatDisplayDate(value)}</span>
-          <svg className="w-5 h-5 text-zinc-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isOpen ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
+          <span className="font-medium">
+            {LAO_TRANSLATIONS.useDateTimePicker}: {formatDisplayDate(value)}
+          </span>
+          <svg
+            className="w-5 h-5 text-zinc-500 transform transition-transform duration-200"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d={isOpen ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"}
+            />
           </svg>
         </button>
 
@@ -311,7 +354,10 @@ const DateTimePicker: React.FC<{
         )}
 
         {isOpen && (
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+          />
         )}
       </div>
     </div>
@@ -503,9 +549,13 @@ const CheckinForm: React.FC<Props> = ({
             onChange={handleChange}
             className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md appearance-none"
           >
-            <option value="normal">{LAO_TRANSLATIONS.statusOptions.normal}</option>
+            <option value="normal">
+              {LAO_TRANSLATIONS.statusOptions.normal}
+            </option>
             <option value="late">{LAO_TRANSLATIONS.statusOptions.late}</option>
-            <option value="early">{LAO_TRANSLATIONS.statusOptions.early}</option>
+            <option value="early">
+              {LAO_TRANSLATIONS.statusOptions.early}
+            </option>
           </select>
         </div>
 
@@ -547,7 +597,8 @@ const CheckinForm: React.FC<Props> = ({
 
         <div className="mt-4 p-4 bg-blue-100 dark:bg-blue-900/30 rounded-2xl border border-blue-200 dark:border-blue-800">
           <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 text-center">
-            <strong>{LAO_TRANSLATIONS.currentSelection}:</strong> {formatDisplayDate(selectedDate)}
+            <strong>{LAO_TRANSLATIONS.currentSelection}:</strong>{" "}
+            {formatDisplayDate(selectedDate)}
           </p>
           <p className="text-xs text-blue-600 dark:text-blue-400 text-center mt-2">
             {LAO_TRANSLATIONS.willBeSubmitted}{" "}
