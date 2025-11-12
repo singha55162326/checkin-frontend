@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchCheckins, addCheckin, updateCheckin, deleteCheckin, Checkin } from "../utils/api";
+import {
+  fetchCheckins,
+  addCheckin,
+  updateCheckin,
+  deleteCheckin,
+  Checkin,
+} from "../utils/api";
 import CheckinForm from "../components/CheckinForm";
 import CheckinTable from "../components/CheckinTable";
 import Pagination from "../components/Pagination";
 
-// Debounce hook for search (not emp_code)
+// ສ້າງ hook ສຳລັບການ delay ການຄົ້ນຫາ (ບໍ່ແມ່ນ emp_code)
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -39,13 +45,13 @@ export default function Home() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // 🔍 Filter states
-  const [empCodeFilter, setEmpCodeFilter] = useState(""); // real-time
-  const [searchFilter, setSearchFilter] = useState(""); // debounced
+  // 🔍 ສະຖານະການຕອງ
+  const [empCodeFilter, setEmpCodeFilter] = useState(""); // ຕອງທັນທີ
+  const [searchFilter, setSearchFilter] = useState(""); // ຕອງດ້ວຍການ delay
 
   const debouncedSearch = useDebounce(searchFilter, 400);
 
-  // Fetch check-ins
+  // ດຶງຂໍ້ມູນການເຂົ້າລະບົບ
   const loadCheckins = async (pageNumber = 1, empCode = "", search = "") => {
     setLoading(true);
     setError("");
@@ -56,25 +62,25 @@ export default function Home() {
       setTotalPages(data.totalPages);
     } catch (err) {
       console.error(err);
-      setError("Failed to load check-ins. Please try again.");
+      setError("ດຶງຂໍ້ມູນການເຂົ້າລະບົບບໍ່ສຳເລັດ. ກະລຸນາລອງອີກຄັ້ງ.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Initial load
+  // ໂຫຼດຄັ້ງທຳອິດ
   useEffect(() => {
     loadCheckins(page, empCodeFilter, debouncedSearch);
   }, []);
 
-  // Real-time emp_code: trigger immediately on change
+  // emp_code: ຕອງທັນທີເມື່ອມີການປ່ຽນແປງ
   useEffect(() => {
     const newPage = 1;
     setPage(newPage);
     loadCheckins(newPage, empCodeFilter, debouncedSearch);
   }, [empCodeFilter]);
 
-  // Debounced search: only trigger after 400ms pause
+  // ການຄົ້ນຫາດ້ວຍການ delay: ຈະເລີ່ມຕົ້ນຫຼັງຈາກຢຸດພິມ 400ms
   useEffect(() => {
     const newPage = 1;
     setPage(newPage);
@@ -87,22 +93,22 @@ export default function Home() {
     setSuccess("");
 
     if (!form.emp_code.trim() || !(form.device_id || "").trim()) {
-      setError("Employee code and device ID are required.");
+      setError("ຕ້ອງການລະຫັດພະນັກງານ ແລະ ໄອດີອຸປະກອນ.");
       return;
     }
 
     try {
       if (editingId) {
-        // Update existing checkin
+        // ອັບເດດຂໍ້ມູນທີ່ມີຢູ່
         await updateCheckin(editingId, form);
-        setSuccess("✅ Check-in updated successfully!");
+        setSuccess("✅ ອັບເດດຂໍ້ມູນການເຂົ້າລະບົບສຳເລັດ!");
       } else {
-        // Create new checkin
+        // ສ້າງຂໍ້ມູນໃໝ່
         await addCheckin(form);
-        setSuccess("✅ Check-in added successfully!");
+        setSuccess("✅ ເພີ່ມຂໍ້ມູນການເຂົ້າລະບົບສຳເລັດ!");
       }
-      
-      // Reset form and refresh data
+
+      // ລຶບຟອມ ແລະ ຮີເຟີດຂໍ້ມູນ
       setForm({
         emp_code: "",
         device_id: "",
@@ -116,12 +122,15 @@ export default function Home() {
       loadCheckins(page, empCodeFilter, debouncedSearch);
     } catch (err) {
       console.error(err);
-      setError(`❌ Failed to ${editingId ? 'update' : 'add'} check-in. Please try again.`);
+      setError(
+        `❌ ບໍ່ສາມາດ${
+          editingId ? "ອັບເດດ" : "ເພີ່ມ"
+        }ຂໍ້ມູນການເຂົ້າລະບົບໄດ້. ກະລຸນາລອງອີກຄັ້ງ.`
+      );
     }
   };
 
   const handleEdit = (checkin: Checkin) => {
-    // Convert the checkin data to form format
     setForm({
       emp_code: checkin.emp_code,
       device_id: checkin.device_id || "",
@@ -132,18 +141,19 @@ export default function Home() {
       punch_time: checkin.punch_time,
     });
     setEditingId(checkin.checkin_id);
-    // Scroll to the form
-    document.getElementById("checkin-form")?.scrollIntoView({ behavior: "smooth" });
+    document
+      .getElementById("checkin-form")
+      ?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleDelete = async (id: number) => {
     try {
       await deleteCheckin(id);
-      setSuccess("✅ Check-in deleted successfully!");
+      setSuccess("✅ ລຶບຂໍ້ມູນການເຂົ້າລະບົບສຳເລັດ!");
       loadCheckins(page, empCodeFilter, debouncedSearch);
     } catch (err) {
       console.error(err);
-      setError("❌ Failed to delete check-in. Please try again.");
+      setError("❌ ບໍ່ສາມາດລຶບຂໍ້ມູນການເຂົ້າລະບົບໄດ້. ກະລຸນາລອງອີກຄັ້ງ.");
     }
   };
 
@@ -186,11 +196,11 @@ export default function Home() {
       <div className="max-w-6xl mx-auto">
         <header className="text-center py-8">
           <h1 className="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400">
-            Employee Check-in System
+            ລະບົບຕິດຕາມການເຂົ້າລະບົບຂອງພະນັກງານ
           </h1>
           <p className="mt-3 text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-            Seamlessly manage employee attendance with real-time check-ins and
-            location tracking.
+            ຈັດການການລົງຊື່ເຂົ້າ-ອອກຂອງພະນັກງານຢ່າງມີປະສິດທິພາບ
+            ພ້ອມຕິດຕາມຕຳແໜ່ງທີ່ແບບເວລາຈິງ.
           </p>
         </header>
 
@@ -207,7 +217,10 @@ export default function Home() {
 
         <div className="bg-white dark:bg-zinc-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 mb-8 transition-all duration-300 hover:shadow-xl border border-zinc-200 dark:border-zinc-700">
           <h2 className="text-xl font-semibold mb-5 text-zinc-800 dark:text-white flex items-center gap-2">
-            <span>{editingId ? "✏️" : "➕"}</span> {editingId ? "Edit Check-in" : "Add New Check-in"}
+            <span>{editingId ? "✏️" : "➕"}</span>{" "}
+            {editingId
+              ? "ແກ້ໄຂຂໍ້ມູນການເຂົ້າລະບົບ"
+              : "ເພີ່ມຂໍ້ມູນການເຂົ້າລະບົບໃໝ່"}
           </h2>
           <div id="checkin-form">
             <CheckinForm
@@ -223,7 +236,7 @@ export default function Home() {
                 onClick={cancelEdit}
                 className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition"
               >
-                Cancel Edit
+                ຍົກເລີກການແກ້ໄຂ
               </button>
             </div>
           )}
@@ -232,24 +245,24 @@ export default function Home() {
         <div className="bg-white dark:bg-zinc-800/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 mb-10">
           <div className="p-4 sm:p-6 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center flex-wrap gap-2">
             <h2 className="text-xl font-semibold text-zinc-800 dark:text-white">
-              Recent Check-ins
+              ການເຂົ້າລະບົບລ່າສຸດ
             </h2>
             {loading && (
               <div className="text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                Loading...
+                ກຳລັງໂຫຼດ...
               </div>
             )}
           </div>
 
-          {/* 🔍 Filter Inputs */}
+          {/* 🔍 ຟອມຕອງຂໍ້ມູນ */}
           <div className="p-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <label
                 htmlFor="empCodeFilter"
                 className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
               >
-                Filter by Employee Code (real-time)
+                ລະຫັດພະນັກງານ
               </label>
               <input
                 type="text"
@@ -260,7 +273,7 @@ export default function Home() {
                     e.target.value.slice(0, 50).toUpperCase().trim()
                   )
                 }
-                placeholder="e.g. EMP123"
+                placeholder="ຕົວຢ່າງ: EMP123"
                 className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 maxLength={50}
               />
@@ -270,14 +283,14 @@ export default function Home() {
                 htmlFor="searchFilter"
                 className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
               >
-                Search (debounced)
+                ຄົ້ນຫາ (ມີການ delay)
               </label>
               <input
                 type="text"
                 id="searchFilter"
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value.slice(0, 100))}
-                placeholder="Search status, comments..."
+                placeholder="ຄົ້ນຫາສະຖານະ, ຄຳເຫັນ..."
                 className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 maxLength={100}
               />
@@ -290,12 +303,16 @@ export default function Home() {
                 onClick={clearFilters}
                 className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
               >
-                Clear Filters
+                ລຶບຕົວກອງທັງໝົດ
               </button>
             </div>
           )}
 
-          <CheckinTable checkins={checkins} onEdit={handleEdit} onDelete={handleDelete} />
+          <CheckinTable
+            checkins={checkins}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         </div>
 
         <div className="flex justify-center pb-12">
@@ -313,8 +330,8 @@ export default function Home() {
         </div>
 
         <footer className="text-center text-zinc-500 dark:text-zinc-400 text-sm pb-8">
-          © {new Date().getFullYear()} Employee Check-in System • Secure •
-          Real-time
+          © {new Date().getFullYear()} ລະບົບຕິດຕາມການເຂົ້າລະບົບຂອງພະນັກງານ •
+          ປອດໄພ • ເວລາຈິງ
         </footer>
       </div>
     </div>
