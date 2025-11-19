@@ -10,8 +10,8 @@ const DEVICE_OPTIONS = [
     lng: 102.6285838,
   },
   {
-    id: "InfinixX6851B",
-    name: "Infinix X6851B",
+    id: "InfinixInfinix X6851B",
+    name: "InfinixInfinix X6851B",
     lat: 17.9406925,
     lng: 102.6285838,
   },
