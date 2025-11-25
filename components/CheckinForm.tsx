@@ -30,22 +30,22 @@ const DEVICE_OPTIONS = [
     id: "OPPOCPH1931",
     name: "OPPO CPH1931",
   },
-  {
-    id: "BB6AC43C-DA37-43C1-926C-51D6A5474B86",
-    name: "iPhone 12 Pro Max",
-  },
-  {
-    id: "Redmi2201116TG",
-    name: "Redmi 2201116TG",
-  },
-  {
-    id: "65B2643C-3D92-49D3-983A-248D8DF22C90",
-    name: "iPhone SE (2nd generation)",
-  },
-  {
-    id: "vivoV2309A",
-    name: "vivo V2309A",
-  },
+  // {
+  //   id: "BB6AC43C-DA37-43C1-926C-51D6A5474B86",
+  //   name: "iPhone 12 Pro Max",
+  // },
+  // {
+  //   id: "Redmi2201116TG",
+  //   name: "Redmi 2201116TG",
+  // },
+  // {
+  //   id: "65B2643C-3D92-49D3-983A-248D8DF22C90",
+  //   name: "iPhone SE (2nd generation)",
+  // },
+  // {
+  //   id: "vivoV2309A",
+  //   name: "vivo V2309A",
+  // },
 ];
 
 // ... [Keep LAO_TRANSLATIONS and Helper Functions like toPostgresTimestamp as they were] ...
