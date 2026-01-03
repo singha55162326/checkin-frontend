@@ -32,7 +32,7 @@ const DEVICE_OPTIONS = [
   },
   {
     id: "BB6AC43C-DA37-43C1-926C-51D6A5474B86",
-    name: "iPhone 16 Pro ",
+    name: "iPhone (16 Pro) ",
   },
   // {
   //   id: "Redmi2201116TG",
