@@ -30,10 +30,10 @@ const DEVICE_OPTIONS = [
     id: "OPPOCPH1931",
     name: "OPPO CPH1931",
   },
-  // {
-  //   id: "BB6AC43C-DA37-43C1-926C-51D6A5474B86",
-  //   name: "iPhone 12 Pro Max",
-  // },
+  {
+    id: "BB6AC43C-DA37-43C1-926C-51D6A5474B86",
+    name: "iPhone 16 Pro ",
+  },
   // {
   //   id: "Redmi2201116TG",
   //   name: "Redmi 2201116TG",
